@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 
+	"path/filepath"
+
 	"github.com/gruntwork-io/terragrunt/config"
 	"github.com/gruntwork-io/terragrunt/errors"
 	"github.com/gruntwork-io/terragrunt/options"
@@ -15,7 +17,6 @@ import (
 	"github.com/hashicorp/go-getter"
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
 	"github.com/mattn/go-zglob"
-	"path/filepath"
 )
 
 // This struct represents information about Terraform source code that needs to be downloaded
@@ -379,7 +380,14 @@ func downloadSource(terraformSource *TerraformSource, terragruntOptions *options
 	// go-getter to download into that temp folder.
 	tmpDownloadDir := util.JoinPath(terragruntOptions.DownloadDir, fmt.Sprintf("tmp-download-%s", util.UniqueId()))
 	defer os.RemoveAll(tmpDownloadDir)
-	if err := getter.GetAny(tmpDownloadDir, terraformSource.CanonicalSourceURL.String()); err != nil {
+	if err := getter.GetAny(tmpDownloadDir, terraformSource.CanonicalSourceURL.String(),
+		// create a custom file getter that copies files instead of creating symlinks
+		func(c *getter.Client) error {
+			c.Getters = getter.Getters
+			c.Getters["file"] = &getter.FileGetter{Copy: true}
+			return nil
+		},
+	); err != nil {
 		return errors.WithStackTrace(err)
 	}
 
