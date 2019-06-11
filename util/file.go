@@ -162,7 +162,7 @@ func CopyFolderContentsWithFilter(source string, destination string, filter func
 			return err
 		}
 
-		if !filter(fileRelativePath) || IsSymLink(file) {
+		if !filter(fileRelativePath) {
 			continue
 		}
 
@@ -193,13 +193,6 @@ func CopyFolderContentsWithFilter(source string, destination string, filter func
 	}
 
 	return nil
-}
-
-// IsSymLink returns true if the given file is a symbolic link
-// Per https://stackoverflow.com/a/18062079/2308858
-func IsSymLink(path string) bool {
-	fileInfo, err := os.Lstat(path)
-	return err == nil && fileInfo.Mode()&os.ModeSymlink != 0
 }
 
 func PathContainsHiddenFileOrFolder(path string) bool {
