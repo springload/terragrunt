@@ -14,8 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"cloud.google.com/go/storage"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -31,6 +29,7 @@ import (
 	"github.com/gruntwork-io/terragrunt/shell"
 	"github.com/gruntwork-io/terragrunt/util"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/api/iterator"
 )
 
@@ -1567,7 +1566,7 @@ func copyEnvironment(t *testing.T, environmentPath string) string {
 
 	t.Logf("Copying %s to %s", environmentPath, tmpDir)
 
-	require.NoError(t, util.CopyFolderContents(environmentPath, util.JoinPath(tmpDir, environmentPath)))
+	require.NoError(t, util.CopyFolderContents(environmentPath, util.JoinPath(tmpDir, environmentPath), ".terragrunt-test"))
 
 	return tmpDir
 }
