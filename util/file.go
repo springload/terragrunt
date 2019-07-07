@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -294,8 +295,8 @@ func (manifest *fileManifest) clean(path string) error {
 	defer file.Close()
 	decoder := gob.NewDecoder(file)
 	// decode paths one by one
-	var manifestEntry fileManifestEntry
 	for {
+		var manifestEntry fileManifestEntry
 		err = decoder.Decode(&manifestEntry)
 		if err != nil {
 			if err == io.EOF {
@@ -304,12 +305,13 @@ func (manifest *fileManifest) clean(path string) error {
 				return err
 			}
 		}
+		log.Printf("Got entry %#v", manifestEntry)
 		if manifestEntry.IsDir {
-			if err := manifest.clean(filepath.Join(path, manifestEntry.Path)); err != nil {
+			if err := manifest.clean(manifestEntry.Path); err != nil {
 				return errors.WithStackTrace(err)
 			}
 		} else {
-			if err := os.RemoveAll(manifestPath); err != nil {
+			if err := os.RemoveAll(manifestEntry.Path); err != nil {
 				return errors.WithStackTrace(err)
 			}
 		}
@@ -336,7 +338,7 @@ func (manifest *fileManifest) Create() error {
 
 // AddFile will add another file path to the manifest file. Please make sure to run Create() before using this
 func (manifest *fileManifest) AddFile(path string) error {
-	return manifest.encoder.Encode(fileManifestEntry{Path: path})
+	return manifest.encoder.Encode(fileManifestEntry{Path: path, IsDir: false})
 }
 
 // AddDirectory will add another directory path to the manifest file. Please make sure to run Create() before using this

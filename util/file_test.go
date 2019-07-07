@@ -125,15 +125,22 @@ func TestJoinTerraformModulePath(t *testing.T) {
 func TestFileManifest(t *testing.T) {
 	t.Parallel()
 
-	var testfiles = []string{"file1", "file2"}
+	var testfiles []string
 
-	for _, file := range testfiles {
-		f, err := ioutil.TempFile("", file)
+	// create temp dir
+	dir, err := ioutil.TempDir("", ".terragrunt-test-dir")
+	require.Nil(t, err)
+	for _, file := range []string{"file1", "file2"} {
+		// create temp files in the dir
+		f, err := ioutil.TempFile(dir, file)
 		assert.Nil(t, err, f.Close())
+		testfiles = append(testfiles, f.Name())
 	}
 
-	manifest := newFileManifest("./", ".terragrunt-test-manifest")
+	// create a manifest
+	manifest := newFileManifest(dir, ".terragrunt-test-manifest")
 	require.Nil(t, manifest.Create())
+	// check the file manifest has been created
 	assert.FileExists(t, filepath.Join(manifest.Path, manifest.ManifestFile))
 	for _, file := range testfiles {
 		assert.Nil(t, manifest.AddFile(file))

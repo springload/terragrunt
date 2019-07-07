@@ -158,6 +158,18 @@ func TestDownloadTerraformSourceIfNecessaryRemoteUrlOverrideSource(t *testing.T)
 
 	testDownloadTerraformSourceIfNecessary(t, canonicalUrl, downloadDir, true, "# Hello, World")
 }
+func TestDownloadTerraformSourceFromLocalFolderWithManifest(t *testing.T) {
+	t.Parallel()
+
+	downloadDir := tmpDir(t)
+	defer os.Remove(downloadDir)
+
+	copyFolder(t, "../test/fixture-manifest/version-1", downloadDir)
+	require.Equal(t, util.FileExists(filepath.Join(downloadDir, "stale_file.tf")), true)
+	copyFolder(t, "../test/fixture-manifest/version-2", downloadDir)
+	//require.Equal(t, util.FileExists(filepath.Join(downloadDir, "stale_file.tf")), false)
+
+}
 
 func TestSplitSourceUrl(t *testing.T) {
 	t.Parallel()
