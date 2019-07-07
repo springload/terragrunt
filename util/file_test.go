@@ -9,6 +9,7 @@ import (
 
 	"github.com/gruntwork-io/terragrunt/test/helpers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetPathRelativeTo(t *testing.T) {
@@ -131,9 +132,9 @@ func TestFileManifest(t *testing.T) {
 		assert.Nil(t, err, f.Close())
 	}
 
-	manifest := newFileManifest(".terragrunt-test-manifest")
-	assert.Nil(t, manifest.Create())
-	assert.FileExists(t, manifest.Path)
+	manifest := newFileManifest("./", ".terragrunt-test-manifest")
+	require.Nil(t, manifest.Create())
+	assert.FileExists(t, filepath.Join(manifest.Path, manifest.ManifestFile))
 	for _, file := range testfiles {
 		assert.Nil(t, manifest.AddFile(file))
 	}
