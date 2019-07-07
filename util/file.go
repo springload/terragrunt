@@ -270,6 +270,11 @@ type fileManifest struct {
 	fileHandle   *os.File
 }
 
+type fileManifestEntry struct {
+	Path  string
+	IsDir bool
+}
+
 // Clean will recursively remove all files specified in the manifest
 func (manifest *fileManifest) Clean() error {
 	return manifest.clean(manifest.Path)
@@ -289,9 +294,9 @@ func (manifest *fileManifest) clean(path string) error {
 	defer file.Close()
 	decoder := gob.NewDecoder(file)
 	// decode paths one by one
-	var filePath string
+	var manifestEntry fileManifestEntry
 	for {
-		err = decoder.Decode(&filePath)
+		err = decoder.Decode(&manifestEntry)
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -299,12 +304,12 @@ func (manifest *fileManifest) clean(path string) error {
 				return err
 			}
 		}
-		if IsDir(filePath) {
-			if err := manifest.clean(filepath.Join(path, filePath)); err != nil {
+		if manifestEntry.IsDir {
+			if err := manifest.clean(filepath.Join(path, manifestEntry.Path)); err != nil {
 				return errors.WithStackTrace(err)
 			}
 		} else {
-			if err := os.RemoveAll(path); err != nil {
+			if err := os.RemoveAll(manifestPath); err != nil {
 				return errors.WithStackTrace(err)
 			}
 		}
@@ -320,7 +325,7 @@ func (manifest *fileManifest) clean(path string) error {
 // Create will create the manifest file
 func (manifest *fileManifest) Create() error {
 	var err error
-	manifest.fileHandle, err = os.OpenFile(manifest.Path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	manifest.fileHandle, err = os.OpenFile(filepath.Join(manifest.Path, manifest.ManifestFile), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
@@ -329,9 +334,14 @@ func (manifest *fileManifest) Create() error {
 	return nil
 }
 
-// AddFile will add another filepath to the manifest file. Please make sure to run Create() before using this
-func (manifest *fileManifest) AddFile(file string) error {
-	return manifest.encoder.Encode(file)
+// AddFile will add another file path to the manifest file. Please make sure to run Create() before using this
+func (manifest *fileManifest) AddFile(path string) error {
+	return manifest.encoder.Encode(fileManifestEntry{Path: path})
+}
+
+// AddDirectory will add another directory path to the manifest file. Please make sure to run Create() before using this
+func (manifest *fileManifest) AddDirectory(path string) error {
+	return manifest.encoder.Encode(fileManifestEntry{Path: path, IsDir: true})
 }
 
 // Close closes the manifest file handle
